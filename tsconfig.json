@@ -11,12 +11,11 @@
     "moduleResolution": "node",
     "module": "ES2022",
     "outDir": "dist",
-    "rootDir": "src",
     "sourceMap": true,
     "declaration": true,
     "noEmit": false,
-    "lib": ["es2022"]
+    "lib": ["es2022"],
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "prisma/seed.ts"],
   "exclude": ["node_modules", "dist"]
 }

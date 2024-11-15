@@ -1,0 +1,177 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+model User {  
+  id           String        @id @default(uuid())
+  username     String        @unique
+  email        String        @unique
+  password     String
+  role         Role          @default(USER)
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Movie {
+  id          String      @id @default(uuid())
+  title       String
+  description String      @db.Text
+  duration    Int
+  genres      Genre[]
+  director    String
+  actors      String      @db.Text
+  imageUrl    String?
+  trailerUrl  String?
+  releaseYear Int
+  screenings  Screening[]
+  status      MovieStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Hall {
+  id          String      @id @default(uuid())
+  name        String
+  seats       Seat[]
+  screenings  Screening[]
+  rows        Int
+  columns     Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Seat {
+  id          String      @id @default(uuid())
+  row         Int
+  column      Int
+  hallId   String
+  hall     Hall           @relation(fields: [hallId], references: [id])
+  seatTypeId  String
+  seatType    SeatType    @relation(fields: [seatTypeId], references: [id])
+  reservedSeats ReservedSeat[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([hallId, row, column])
+}
+
+model SeatType {
+  id          String         @id @default(uuid())
+  name        SeatTypeName   @default(STANDARD)
+  price       Decimal        @db.Decimal(10, 2)
+  seats       Seat[]        
+}
+
+enum SeatTypeName {
+  DISABLED
+  VIP
+  STANDARD
+}
+
+model Screening {
+  id          String          @id @default(uuid())
+  movieId     String
+  movie       Movie           @relation(fields: [movieId], references: [id])
+  hallId      String
+  hall        Hall            @relation(fields: [hallId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  status      ScreeningStatus @default(ACTIVE)
+  reservations Reservation[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([startTime])
+  @@index([movieId])
+  @@index([status])
+}
+
+model Reservation {
+  id            String          @id @default(uuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  screeningId   String
+  screening     Screening       @relation(fields: [screeningId], references: [id])
+  status        ReservationStatus @default(PENDING)
+  totalPrice    Decimal         @db.Decimal(10, 2)
+  paymentStatus PaymentStatus   @default(UNPAID)
+  paymentMethod PaymentMethod?
+  reservedSeats ReservedSeat[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  expiresAt     DateTime
+
+  @@index([userId])
+  @@index([screeningId])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model ReservedSeat {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  seatId        String
+  seat          Seat        @relation(fields: [seatId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([reservationId, seatId])
+  @@index([reservationId])
+  @@index([seatId])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Genre {
+  ACTION
+  ADVENTURE
+  COMEDY
+  DRAMA
+  FANTASY
+  HISTORICAL
+  HORROR
+  ROMANCE
+  SCIENCE_FICTION
+  THRILLER
+  WESTERN
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum MovieStatus {
+  ACTIVE
+  COMING_SOON
+  ARCHIVED
+}
+
+enum ScreeningStatus {
+  ACTIVE
+  CANCELLED
+  FINISHED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+}

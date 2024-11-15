@@ -21,6 +21,9 @@
     "prettier": "prettier \"{src}/**/*.{ts,mts}\" --config .prettierrc --write",
     "prettier:check": "prettier \"{src}/**/*.{ts,mts}\" --config .prettierrc --check"
   },
+  "prisma": {
+    "seed": "node --loader ts-node/esm prisma/seed.ts"
+  },
   "dependencies": {
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
