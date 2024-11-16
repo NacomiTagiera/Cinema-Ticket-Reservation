@@ -1,5 +1,6 @@
 import express from 'express';
 import authRoutes from './routes/auth.js';
+import moviesRoutes from './routes/movies.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -7,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/movies', moviesRoutes);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
 	console.error(err.stack);

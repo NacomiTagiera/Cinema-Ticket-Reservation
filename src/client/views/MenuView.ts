@@ -32,6 +32,7 @@ export class MenuView {
 				choices,
 			},
 		]);
+
 		return answer.mainMenuOption;
 	}
 }

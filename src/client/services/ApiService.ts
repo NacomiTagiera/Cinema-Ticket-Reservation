@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { type Movie } from '../models/Movie.js';
+import { type Screening } from '../models/Screening.js';
 import type { User, UserResponse } from '../models/User.js';
 
 export class ApiService {
@@ -11,6 +13,16 @@ export class ApiService {
 
 	static async register(userData: User): Promise<UserResponse> {
 		const response = await axios.post(`${this.BASE_URL}/auth/register`, userData);
+		return response.data;
+	}
+
+	static async getMovies(): Promise<Movie[]> {
+		const response = await axios.get(`${this.BASE_URL}/movies`);
+		return response.data;
+	}
+
+	static async getMovieScreenings(movieId: string): Promise<Screening[]> {
+		const response = await axios.get(`${this.BASE_URL}/movies/${movieId}/screenings`);
 		return response.data;
 	}
 }

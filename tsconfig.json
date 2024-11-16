@@ -15,6 +15,7 @@
     "declaration": true,
     "noEmit": false,
     "lib": ["es2022"],
+    "typeRoots": ["./node_modules/@types", "./src/server/types"]
   },
   "include": ["src/**/*", "prisma/seed.ts"],
   "exclude": ["node_modules", "dist"]

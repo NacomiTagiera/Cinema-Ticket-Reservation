@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { ApiService } from '../services/ApiService.js';
 import { AuthStore } from '../store/AuthStore.js';
 import { handleError } from '../utils/errorHandler.js';
+import { wait } from '../utils/wait.js';
 import { AuthView } from '../views/AuthView.js';
 
 export class AuthController {
@@ -16,7 +17,7 @@ export class AuthController {
 			console.log(chalk.green('Login successful!'));
 		} catch (error) {
 			handleError(error, 'Login failed');
-			await new Promise((resolve) => setTimeout(resolve, 2000)); // give user time to read the error
+			await wait();
 		}
 	}
 
@@ -31,7 +32,7 @@ export class AuthController {
 			console.log(chalk.green(response.message));
 		} catch (error) {
 			handleError(error, 'Registration failed');
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			await wait();
 		}
 	}
 
