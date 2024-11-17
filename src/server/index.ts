@@ -1,6 +1,7 @@
 import express from 'express';
 import authRoutes from './routes/auth.js';
 import moviesRoutes from './routes/movies.js';
+import { BackgroundJobService } from './services/BackgroundJobService.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,4 +19,15 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
+});
+
+const backgroundJobService = BackgroundJobService.getInstance();
+backgroundJobService.start();
+
+process.on('SIGTERM', () => {
+	backgroundJobService.stop();
+});
+
+process.on('SIGINT', () => {
+	backgroundJobService.stop();
 });

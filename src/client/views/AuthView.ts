@@ -32,8 +32,17 @@ export class AuthView {
 				type: 'input',
 				name: 'username',
 				message: 'Enter your username:',
-				validate: (input: string) =>
-					input.length >= 3 ? true : 'Username must be at least 3 characters long',
+				validate: (input: string) => {
+					const trimmedInput = input.trim();
+					if (trimmedInput.length < 3) {
+						return 'Username must be at least 3 characters long';
+					}
+					if (trimmedInput.length > 50) {
+						return 'Username must not exceed 50 characters';
+					}
+					return true;
+				},
+				filter: (input: string) => input.trim(),
 			},
 			{
 				type: 'input',

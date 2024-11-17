@@ -29,7 +29,7 @@ export class AuthController {
 			const authStore = AuthStore.getInstance();
 			authStore.setToken(response.token);
 
-			console.log(chalk.green(response.message));
+			console.log(chalk.green('Registration successful!'));
 		} catch (error) {
 			handleError(error, 'Registration failed');
 			await wait();

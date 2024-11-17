@@ -1,15 +1,13 @@
-import type { Genre, MovieStatus } from '@prisma/client';
-
 export interface Movie {
 	id: string;
 	title: string;
 	description: string;
 	duration: number;
-	genres: Genre[];
+	genres: string[];
 	director: string;
 	actors: string;
 	imageUrl?: string;
 	trailerUrl?: string;
 	releaseYear: number;
-	status: MovieStatus;
+	status: 'ACTIVE' | 'COMING_SOON' | 'ARCHIVED';
 }

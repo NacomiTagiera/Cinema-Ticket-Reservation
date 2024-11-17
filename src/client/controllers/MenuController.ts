@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { MenuView } from '../views/MenuView.js';
 import { AuthController } from './AuthController.js';
 import { MovieController } from './MovieController.js';
+import { ReservationController } from './ReservationController.js';
 
 export class MenuController {
 	static async showMainMenu(): Promise<void> {
@@ -23,7 +24,7 @@ export class MenuController {
 					await MovieController.handleBrowseMovies();
 					break;
 				case 'My Reservations':
-					console.log(chalk.yellow('My Reservations - Coming soon...'));
+					await ReservationController.handleViewReservations();
 					break;
 				case 'Exit':
 					console.log(chalk.blue('Thank you for visiting!'));
