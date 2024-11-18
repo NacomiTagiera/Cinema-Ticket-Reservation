@@ -67,7 +67,9 @@ router.get(
 			for (let row = 0; row < screening.hall.rows; row++) {
 				seatsGrid[row] = [];
 				for (let col = 0; col < screening.hall.columns; col++) {
-					const seat = screening.hall.seats.find((s) => s.row === row + 1 && s.column === col + 1);
+					const seat = screening.hall.seats.find(
+						(s: { row: number; column: number }) => s.row === row + 1 && s.column === col + 1,
+					);
 					if (seat) {
 						seatsGrid[row]![col] = {
 							id: seat.id,

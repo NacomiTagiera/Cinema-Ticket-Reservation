@@ -4,7 +4,7 @@ import prisma from '../prisma.js';
 import {
 	type IScreeningRepository,
 	type ScreeningWithHall,
-} from './interfaces/IScreeningRepository';
+} from './interfaces/IScreeningRepository.js';
 
 export class ScreeningRepository implements IScreeningRepository {
 	async findById(id: string): Promise<Screening | null> {
