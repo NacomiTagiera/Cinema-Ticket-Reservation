@@ -17,12 +17,26 @@ export class MenuView {
 	}
 
 	static async getMainMenuChoice(): Promise<
-		'Login' | 'Register' | 'Sign Out' | 'Browse Movies' | 'My Reservations' | 'Exit'
+		| 'Login'
+		| 'Register'
+		| 'Sign Out'
+		| 'Browse Movies'
+		| 'My Reservations'
+		| 'Manage Movies'
+		| 'Manage Screenings'
+		| 'Manage Payments'
+		| 'Exit'
 	> {
 		const authStore = AuthStore.getInstance();
-		const choices = authStore.isAuthenticated
-			? ['Browse Movies', 'My Reservations', 'Sign Out', 'Exit']
-			: ['Login', 'Register', 'Exit'];
+		let choices: string[];
+
+		if (!authStore.isAuthenticated) {
+			choices = ['Login', 'Register', 'Exit'];
+		} else if (authStore.isAdmin) {
+			choices = ['Manage Movies', 'Manage Screenings', 'Manage Payments', 'Sign Out', 'Exit'];
+		} else {
+			choices = ['Browse Movies', 'My Reservations', 'Sign Out', 'Exit'];
+		}
 
 		const answer = await inquirer.prompt([
 			{

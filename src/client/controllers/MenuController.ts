@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { MenuView } from '../views/MenuView.js';
+import { AdminController } from './AdminController.js';
 import { AuthController } from './AuthController.js';
 import { MovieController } from './MovieController.js';
 import { ReservationController } from './ReservationController.js';
@@ -25,6 +26,15 @@ export class MenuController {
 					break;
 				case 'My Reservations':
 					await ReservationController.handleViewReservations();
+					break;
+				case 'Manage Movies':
+					await AdminController.handleManageMovies();
+					break;
+				case 'Manage Screenings':
+					await AdminController.handleManageScreenings();
+					break;
+				case 'Manage Payments':
+					await AdminController.handleManagePayments();
 					break;
 				case 'Exit':
 					console.log(chalk.blue('Thank you for visiting!'));

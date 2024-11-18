@@ -2,22 +2,18 @@ import express, { type Request, type Response } from 'express';
 import { type JwtPayload } from 'jsonwebtoken';
 import { type Seat } from '../../client/models/Seat.js';
 import { authenticateToken } from '../middleware/auth.js';
-import prisma from '../prisma.js';
+import {
+	movieRepository,
+	reservationRepository,
+	screeningRepository,
+} from '../repositories/index.js';
 import { calculateExpirationTime } from '../utils/calculateExpirationTime.js';
 
 const router: express.Router = express.Router();
 
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
 	try {
-		const movies = await prisma.movie.findMany({
-			where: {
-				status: 'ACTIVE',
-			},
-			orderBy: {
-				title: 'asc',
-			},
-		});
-
+		const movies = await movieRepository.findActiveMovies();
 		res.json(movies);
 	} catch {
 		res.status(500).json({ error: 'Failed to fetch movies' });
@@ -28,24 +24,12 @@ router.get('/:movieId/screenings', async (req: Request, res: Response): Promise<
 	try {
 		const { movieId } = req.params;
 
-		const now = new Date();
-		const cutoffTime = new Date(now.getTime() + 30 * 60 * 1000);
+		if (!movieId) {
+			res.status(400).json({ error: 'Movie ID is required' });
+			return;
+		}
 
-		const screenings = await prisma.screening.findMany({
-			where: {
-				movieId,
-				startTime: {
-					gte: cutoffTime,
-				},
-			},
-			include: {
-				hall: true,
-			},
-			orderBy: {
-				startTime: 'asc',
-			},
-		});
-
+		const screenings = await screeningRepository.findUpcomingScreeningsForMovie(movieId);
 		const formattedScreenings = screenings.map((screening) => ({
 			id: screening.id,
 			movieId: screening.movieId,
@@ -68,29 +52,12 @@ router.get(
 		try {
 			const { screeningId } = req.params;
 
-			const screening = await prisma.screening.findUnique({
-				where: { id: screeningId },
-				include: {
-					hall: {
-						include: {
-							seats: {
-								include: {
-									seatType: true,
-									reservedSeats: {
-										where: {
-											reservation: {
-												screeningId,
-												status: { not: 'CANCELLED' },
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			});
+			if (!screeningId) {
+				res.status(400).json({ error: 'Screening ID is required' });
+				return;
+			}
 
+			const screening = await screeningRepository.findScreeningWithSeats(screeningId);
 			if (!screening) {
 				res.status(404).json({ error: 'Screening not found' });
 				return;
@@ -145,43 +112,22 @@ router.post(
 				return;
 			}
 
-			const screening = await prisma.screening.findUnique({
-				where: { id: screeningId },
-				select: { startTime: true },
-			});
+			const screening = await screeningRepository.findById(screeningId);
 
 			if (!screening) {
 				res.status(404).json({ error: 'Screening not found' });
 				return;
 			}
 
-			const seats = await prisma.seat.findMany({
-				where: { id: { in: seatIds } },
-				include: { seatType: true },
-			});
-
-			const totalPrice = seats.reduce((sum, seat) => sum + Number(seat.seatType.price), 0);
 			const expiresAt = calculateExpirationTime(screening.startTime);
-
-			const reservation = await prisma.reservation.create({
-				data: {
-					userId,
-					screeningId,
-					totalPrice,
-					paymentMethod,
-					expiresAt,
-					reservedSeats: {
-						create: seatIds.map((seatId) => ({
-							seatId,
-						})),
-					},
-				},
-				include: {
-					screening: {
-						select: { startTime: true },
-					},
-				},
-			});
+			const reservation = await reservationRepository.createReservationWithSeats(
+				userId,
+				screeningId,
+				seatIds,
+				paymentMethod,
+				0, // Total price will be calculated in the repository
+				expiresAt,
+			);
 
 			res.json(reservation);
 		} catch {
@@ -197,32 +143,39 @@ router.post(
 		try {
 			const { reservationId } = req.params;
 			const { paymentMethod } = req.body;
-			const userId = (req.user as JwtPayload).userId as string;
+			const user = req.user as JwtPayload;
 
-			const reservation = await prisma.reservation.findFirst({
-				where: {
-					id: reservationId,
-					userId,
-					status: 'PENDING',
-				},
-			});
+			if (!reservationId) {
+				res.status(400).json({ error: 'Reservation ID is required' });
+				return;
+			}
+
+			// For CASH payments, require admin role
+			if (paymentMethod === 'CASH' && user.role !== 'ADMIN') {
+				res.status(403).json({ error: 'Only admins can confirm cash payments' });
+				return;
+			}
+
+			const reservation =
+				paymentMethod === 'CASH'
+					? await reservationRepository.findById(reservationId) // Admins can confirm any reservation
+					: await reservationRepository.findPendingReservation(reservationId, user.userId);
 
 			if (!reservation) {
 				res.status(404).json({ error: 'Reservation not found' });
 				return;
 			}
 
-			const status = paymentMethod === 'CARD' ? 'CONFIRMED' : 'PENDING';
-			const paymentStatus = paymentMethod === 'CARD' ? 'PAID' : 'UNPAID';
+			if (reservation.paymentStatus === 'PAID') {
+				res.status(400).json({ error: 'Reservation is already paid' });
+				return;
+			}
 
-			const updatedReservation = await prisma.reservation.update({
-				where: { id: reservationId },
-				data: {
-					status,
-					paymentStatus,
-					paymentMethod,
-				},
-			});
+			const updatedReservation = await reservationRepository.updateReservationStatus(
+				reservationId,
+				'CONFIRMED',
+				'PAID',
+			);
 
 			res.json(updatedReservation);
 		} catch {
@@ -237,45 +190,46 @@ router.get(
 	async (req: Request, res: Response): Promise<void> => {
 		try {
 			const userId = (req.user as JwtPayload).userId as string;
-
-			const reservations = await prisma.reservation.findMany({
-				where: {
-					userId,
-				},
-				include: {
-					screening: {
-						include: {
-							movie: {
-								select: {
-									title: true,
-								},
-							},
-							hall: {
-								select: {
-									name: true,
-								},
-							},
-						},
-					},
-					reservedSeats: {
-						include: {
-							seat: {
-								select: {
-									row: true,
-									column: true,
-								},
-							},
-						},
-					},
-				},
-				orderBy: {
-					createdAt: 'desc',
-				},
-			});
+			const reservations = await reservationRepository.findUserReservations(userId);
 
 			res.json(reservations);
 		} catch {
 			res.status(500).json({ error: 'Failed to fetch reservations' });
+		}
+	},
+);
+
+router.get(
+	'/reservations/:id',
+	authenticateToken,
+	async (req: Request, res: Response): Promise<void> => {
+		try {
+			const { id } = req.params;
+			const user = req.user as JwtPayload;
+
+			if (!id) {
+				res.status(400).json({ error: 'Reservation ID is required' });
+				return;
+			}
+
+			// Allow admins to view any reservation
+			const reservation = await reservationRepository.findById(id);
+
+			if (!reservation) {
+				res.status(404).json({ error: 'Reservation not found' });
+				return;
+			}
+
+			// Only allow users to view their own reservations unless they're an admin
+			if (reservation.userId !== user.userId && user.role !== 'ADMIN') {
+				res.status(403).json({ error: 'Unauthorized' });
+				return;
+			}
+
+			res.json(reservation);
+		} catch (error) {
+			console.error('Server error:', error);
+			res.status(500).json({ error: 'Failed to fetch reservation' });
 		}
 	},
 );

@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
 	const authHeader = req.headers['authorization'];
@@ -17,4 +17,15 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 	} catch {
 		res.status(403).json({ error: 'Invalid token' });
 	}
+};
+
+export const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
+	const user = req.user as JwtPayload;
+
+	if (user.role !== 'ADMIN') {
+		res.status(403).json({ error: 'Admin access required' });
+		return;
+	}
+
+	next();
 };

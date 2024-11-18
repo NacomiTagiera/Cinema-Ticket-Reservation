@@ -1,6 +1,8 @@
 import express from 'express';
+import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
 import moviesRoutes from './routes/movies.js';
+import screeningsRoutes from './routes/screenings.js';
 import { BackgroundJobService } from './services/BackgroundJobService.js';
 
 const app = express();
@@ -10,6 +12,8 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', moviesRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin/screenings', screeningsRoutes);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
 	console.error(err.stack);

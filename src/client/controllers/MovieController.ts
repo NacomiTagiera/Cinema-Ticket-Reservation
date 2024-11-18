@@ -8,7 +8,7 @@ import { MovieView } from '../views/MovieView.js';
 export class MovieController {
 	static async handleBrowseMovies(): Promise<void> {
 		try {
-			const movies = await ApiService.getMovies();
+			const movies = await ApiService.getActiveMovies();
 
 			while (true) {
 				console.clear();
