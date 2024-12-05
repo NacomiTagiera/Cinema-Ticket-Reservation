@@ -48,7 +48,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 		const startDateTime = new Date(startTime);
 		const endDateTime = new Date(startDateTime.getTime() + movie.duration * 60000);
 
-		const isAvailable = await screeningRepository.checkHallAvailability(
+		const isAvailable = await hallRepository.checkHallAvailability(
 			hallId,
 			startDateTime,
 			endDateTime,
@@ -102,7 +102,7 @@ router.put('/:id', async (req: Request, res: Response): Promise<void> => {
 			const startDateTime = startTime ? new Date(startTime) : existingScreening.startTime;
 			endTime = new Date(startDateTime.getTime() + movie.duration * 60000);
 
-			const isAvailable = await screeningRepository.checkHallAvailability(
+			const isAvailable = await hallRepository.checkHallAvailability(
 				hallId || existingScreening.hallId,
 				startDateTime,
 				endTime,
@@ -153,6 +153,37 @@ router.delete('/:id', async (req: Request, res: Response): Promise<void> => {
 		res.status(204).send();
 	} catch {
 		res.status(500).json({ error: 'Failed to delete screening' });
+	}
+});
+
+router.get('/available-halls', async (req: Request, res: Response): Promise<void> => {
+	try {
+		const { startTime, duration } = req.query;
+
+		if (!startTime || !duration) {
+			res.status(400).json({ error: 'Start time and duration are required' });
+			return;
+		}
+
+		const startDateTime = new Date(startTime as string);
+		const endDateTime = new Date(startDateTime.getTime() + Number(duration) * 60000);
+		const halls = await hallRepository.findAll();
+
+		const availableHalls = [];
+		for (const hall of halls) {
+			const isAvailable = await hallRepository.checkHallAvailability(
+				hall.id,
+				startDateTime,
+				endDateTime,
+			);
+			if (isAvailable) {
+				availableHalls.push(hall);
+			}
+		}
+
+		res.json(availableHalls);
+	} catch {
+		res.status(500).json({ error: 'Failed to fetch available halls' });
 	}
 });
 

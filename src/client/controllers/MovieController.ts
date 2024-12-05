@@ -75,6 +75,7 @@ export class MovieController {
 														chalk.red('\nPayment failed. Your reservation will be cancelled.'),
 													);
 												}
+												await wait(2000);
 											} else {
 												await ApiService.confirmPayment(reservation.id, 'CASH');
 												MovieView.displayCashPaymentInstructions(
@@ -82,8 +83,8 @@ export class MovieController {
 													new Date(reservation.screening.startTime),
 													new Date(reservation.expiresAt),
 												);
+												await wait(10000);
 											}
-											await wait(10000);
 										} catch (error) {
 											handleError(error, 'Failed to create reservation');
 											await wait();

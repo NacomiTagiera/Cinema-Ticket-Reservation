@@ -102,6 +102,14 @@ export class ApiService {
 		return response.data;
 	}
 
+	static async getAvailableHalls(startTime: Date, duration: number): Promise<Hall[]> {
+		const response = await axios.get(
+			`${this.BASE_URL}/admin/screenings/available-halls?startTime=${startTime.toISOString()}&duration=${duration}`,
+			this.getAuthHeader(),
+		);
+		return response.data;
+	}
+
 	static async getScreenings(): Promise<ScreeningWithDetails[]> {
 		const response = await axios.get(`${this.BASE_URL}/admin/screenings`, this.getAuthHeader());
 		return response.data;

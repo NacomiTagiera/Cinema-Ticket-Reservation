@@ -27,4 +27,48 @@ export class HallRepository implements IHallRepository {
 			},
 		});
 	}
+
+	async checkHallAvailability(
+		hallId: string,
+		startTime: Date,
+		endTime: Date,
+		excludeId?: string,
+	): Promise<boolean> {
+		const conflictingScreenings = await prisma.screening.count({
+			where: {
+				hallId,
+				id: excludeId ? { not: excludeId } : undefined,
+				OR: [
+					{
+						startTime: {
+							gte: startTime,
+							lt: endTime,
+						},
+					},
+					{
+						endTime: {
+							gt: startTime,
+							lte: endTime,
+						},
+					},
+					{
+						AND: [
+							{
+								startTime: {
+									lte: startTime,
+								},
+							},
+							{
+								endTime: {
+									gte: endTime,
+								},
+							},
+						],
+					},
+				],
+			},
+		});
+
+		return conflictingScreenings === 0;
+	}
 }

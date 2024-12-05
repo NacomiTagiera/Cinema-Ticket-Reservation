@@ -90,6 +90,18 @@ export class AdminController {
 					}
 					break;
 				}
+				case 'find-halls': {
+					const query = await AdminView.findAvailableHalls();
+					if (query) {
+						const availableHalls = await ApiService.getAvailableHalls(
+							query.startTime,
+							query.duration,
+						);
+						AdminView.displayAvailableHalls(availableHalls, query.startTime, query.duration);
+						await wait(5000);
+					}
+					break;
+				}
 				case 'delete': {
 					const screeningToDelete = await AdminView.selectScreening(screenings);
 					if (screeningToDelete) {

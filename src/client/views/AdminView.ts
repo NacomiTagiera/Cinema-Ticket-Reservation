@@ -182,7 +182,9 @@ export class AdminView {
 		return movie;
 	}
 
-	static async getScreeningManagementAction(): Promise<'add' | 'edit' | 'delete' | 'back'> {
+	static async getScreeningManagementAction(): Promise<
+		'add' | 'edit' | 'find-halls' | 'delete' | 'back'
+	> {
 		const answer = await inquirer.prompt([
 			{
 				type: 'list',
@@ -191,6 +193,7 @@ export class AdminView {
 				choices: [
 					{ name: 'Add New Screening', value: 'add' },
 					{ name: 'Edit Existing Screening', value: 'edit' },
+					{ name: 'Find Available Halls', value: 'find-halls' },
 					{ name: 'Delete Screening', value: 'delete' },
 					{ name: 'Back to Main Menu', value: 'back' },
 				],
@@ -328,6 +331,52 @@ export class AdminView {
 		]);
 
 		return Object.fromEntries(Object.entries(answers).filter(([_, value]) => value !== undefined));
+	}
+
+	static async findAvailableHalls(): Promise<{ startTime: Date; duration: number } | null> {
+		console.clear();
+		console.log(chalk.cyan('=== Find Available Halls ===\n'));
+
+		const answers = await inquirer.prompt([
+			{
+				type: 'input',
+				name: 'startTime',
+				message: 'Enter desired start time (YYYY-MM-DD HH:mm):',
+				validate: validateDateTime,
+			},
+			{
+				type: 'number',
+				name: 'duration',
+				message: 'Enter duration (minutes):',
+				validate: (input) => (input && input > 0) || 'Duration must be greater than 0',
+			},
+		]);
+
+		if (!answers.startTime || !answers.duration) {
+			return null;
+		}
+
+		return {
+			startTime: new Date(answers.startTime),
+			duration: answers.duration,
+		};
+	}
+
+	static displayAvailableHalls(halls: Hall[], startTime: Date, duration: number): void {
+		console.clear();
+		console.log(chalk.cyan('=== Available Halls ===\n'));
+		console.log(chalk.white(`For: ${startTime.toLocaleString()}`));
+		console.log(chalk.white(`Duration: ${duration} minutes\n`));
+
+		if (halls.length === 0) {
+			console.log(chalk.yellow('No halls available for this time slot.'));
+			return;
+		}
+
+		halls.forEach((hall) => {
+			console.log(chalk.white(`\n📍 ${hall.name}`));
+			console.log(`   Seats: ${hall.rows}x${hall.columns}`);
+		});
 	}
 
 	static async getReservationId(): Promise<string> {
