@@ -4,7 +4,7 @@ import { finishEndedScreenings } from '../utils/finishEndedScreenings.js';
 export class BackgroundJobService {
 	private static instance: BackgroundJobService;
 	private intervalId: NodeJS.Timeout | null = null;
-	private readonly CHECK_INTERVAL = 1 * 60 * 1000;
+	private readonly CHECK_INTERVAL = 5 * 60 * 1000;
 
 	private constructor() {}
 

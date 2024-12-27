@@ -1,4 +1,5 @@
 import express from 'express';
+import { log } from '@repo/logger';
 import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
 import moviesRoutes from './routes/movies.js';
@@ -6,7 +7,7 @@ import screeningsRoutes from './routes/screenings.js';
 import { BackgroundJobService } from './services/BackgroundJobService.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
@@ -22,7 +23,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 app.listen(PORT, () => {
-	console.log(`Server running on port ${PORT}`);
+	log(`Server running on port ${PORT}`);
 });
 
 const backgroundJobService = BackgroundJobService.getInstance();
